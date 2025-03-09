@@ -15,12 +15,12 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct Todo {
-    id: i64,
     name: String,
+    completed: bool,
 }
 
 impl Todo {
-    pub fn new(id: i64, name: String) -> Self {
-        Self { id, name }
+    pub fn new(name: String, completed: bool) -> Self {
+        Self { name, completed }
     }
 }
