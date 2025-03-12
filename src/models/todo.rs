@@ -1,26 +1,36 @@
 // use serde::{Deserialize, Serialize};
 
-use serde::Serialize;
+use std::time::SystemTime;
 
-// #[derive(Deserialize)]
-// pub struct CreateTodo {
-//     name: String,
-// }
+use mongodb::bson::{DateTime, oid::ObjectId};
+use serde::{Deserialize, Serialize};
 
-// impl CreateTodo {
-//     pub fn new(name: String) -> Self {
-//         Self { name }
-//     }
-// }
-
-#[derive(Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Todo {
-    name: String,
-    completed: bool,
+    pub _id: ObjectId,
+    pub name: String,
+    pub created: DateTime,
+    pub completed: bool,
 }
 
-impl Todo {
-    pub fn new(name: String, completed: bool) -> Self {
-        Self { name, completed }
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TodoRequest {
+    pub name: String,
+    pub created: DateTime,
+    pub completed: bool,
+}
+
+impl TryFrom<TodoRequest> for Todo {
+    type Error = Box<dyn std::error::Error>;
+
+    fn try_from(item: TodoRequest) -> Result<Self, Self::Error> {
+        let chrono_datetime: SystemTime = chrono::Utc::now().into();
+
+        Ok(Self {
+            _id: ObjectId::new(),
+            name: item.name,
+            created: DateTime::from(chrono_datetime),
+            completed: false,
+        })
     }
 }
