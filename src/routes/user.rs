@@ -7,15 +7,14 @@ use argon2::{
 };
 
 // Route registry
-#[post("/user/login", format = "json", data = "<user>")]
-pub async fn login(state: &State<AppState>, user: Json<LoginRequest>) -> Json<bool> {
-
+#[post("/user/login", format = "json", data = "<login>")]
+pub async fn login(state: &State<AppState>, login: Json<LoginRequest>) -> Json<String> {
 
     // let salt = SaltString::generate(&mut OsRng);
     // let password_hash: PasswordHash<'_> = argon2.hash_password(login_request.password.as_bytes(), &salt).ok().unwrap();
-    // Verify password -> Argon2::default().verify_password(login_request.password.as_bytes(), &password_hash).is_ok()
+    // Argon2::default().verify_password(login_request.password.as_bytes(), &password_hash).is_ok()
 
-    Json(true)
+    Json(services::user::login(state, login).await)
 }
 
 #[post("/user/register", format = "json", data = "<registration>")]

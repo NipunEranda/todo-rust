@@ -1,6 +1,6 @@
 use std::time::SystemTime;
 
-use mongodb::bson::{self, DateTime, oid::ObjectId};
+use mongodb::bson::{DateTime, oid::ObjectId};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -64,16 +64,16 @@ impl TryFrom<LoginRequest> for User {
     }
 }
 
-impl UserResponse {
-    pub fn new(id: String, username: String, created: bson::DateTime, is_active: bool) -> Self {
-        UserResponse {
-            id,
-            username,
-            created,
-            is_active,
-        }
-    }
-}
+// impl UserResponse {
+//     pub fn new(id: String, username: String, created: bson::DateTime, is_active: bool) -> Self {
+//         UserResponse {
+//             id,
+//             username,
+//             created,
+//             is_active,
+//         }
+//     }
+// }
 
 impl User {
     pub fn new(username: String, password: String) -> Self {

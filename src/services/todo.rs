@@ -1,7 +1,6 @@
 use crate::{
     AppState,
     models::todo::{Todo, TodoRequest, TodoResponse},
-    utils,
 };
 use mongodb::{
     Collection,

@@ -1,10 +1,9 @@
-use mongodb::{Collection, bson::Document};
+use mongodb::{Collection, bson::doc};
 use rocket::{State, serde::json::Json};
 
 use crate::{
     AppState,
-    models::user::{RegistrationRequest, User},
-    utils,
+    models::user::{LoginRequest, RegistrationRequest, User},
 };
 
 use argon2::{
@@ -21,7 +20,10 @@ pub async fn create_user(
 
     let salt = SaltString::generate(&mut OsRng);
     let argon2: Argon2<'_> = Argon2::default();
-    let password_hash: PasswordHash<'_> = argon2.hash_password(registration.password.as_bytes(), &salt).ok().unwrap();
+    let password_hash: PasswordHash<'_> = argon2
+        .hash_password(registration.password.as_bytes(), &salt)
+        .ok()
+        .unwrap();
 
     let user = User::new(registration.username.clone(), password_hash.to_string());
 
@@ -32,6 +34,39 @@ pub async fn create_user(
     }
 
     user_id
+}
+
+pub async fn login(state: &State<AppState>, login: Json<LoginRequest>) -> String {
+    let token = String::from("");
+
+    let collection = get_collection(state, "user").await;
+
+    let user = collection
+        .find_one(doc! {"username": login.username.clone()})
+        .await
+        .ok()
+        .unwrap();
+
+    if !user.is_some() {
+        return "".to_string();
+    }
+    let user: User = user.unwrap();
+    let pwd_hash = PasswordHash::new(&user.password).ok();
+
+    if !pwd_hash.is_some() {
+        return "".to_string();
+    }
+
+    let pwd_hash = pwd_hash.unwrap();
+
+    println!(
+        "{:?}",
+        Argon2::default()
+            .verify_password(login.password.as_bytes(), &pwd_hash)
+            .is_ok()
+    );
+
+    "success".to_string()
 }
 
 async fn get_collection(state: &State<AppState>, collection: &str) -> Collection<User> {
