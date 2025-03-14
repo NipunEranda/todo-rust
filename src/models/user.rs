@@ -19,6 +19,11 @@ pub struct LoginRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct LoginResponse {
+    pub token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RegistrationRequest {
     pub username: String,
     pub password: String,
@@ -64,17 +69,6 @@ impl TryFrom<LoginRequest> for User {
     }
 }
 
-// impl UserResponse {
-//     pub fn new(id: String, username: String, created: bson::DateTime, is_active: bool) -> Self {
-//         UserResponse {
-//             id,
-//             username,
-//             created,
-//             is_active,
-//         }
-//     }
-// }
-
 impl User {
     pub fn new(username: String, password: String) -> Self {
         let chrono_datetime: SystemTime = chrono::Utc::now().into();
@@ -83,7 +77,7 @@ impl User {
             username,
             password,
             created: DateTime::from(chrono_datetime),
-            is_active: true
+            is_active: true,
         }
     }
 }

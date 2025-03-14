@@ -6,15 +6,15 @@ use mongodb::{
     Collection,
     bson::{doc, oid::ObjectId},
 };
-use rocket::{State, futures::TryStreamExt, serde::json::Json};
+use rocket::{futures::TryStreamExt, http::Status, serde::json::Json, State};
 
-pub async fn get_todos(state: &State<AppState>) -> Vec<TodoResponse> {
+pub async fn get_todos(state: &State<AppState>) -> (Status, Json<Vec<TodoResponse>>) {
     let mut todos: Vec<TodoResponse> = Vec::new();
     let collection: Collection<Todo> = get_collection(state, "todo").await;
     let result = collection.find(doc! {}).await;
     let cursor = match result {
         Ok(cursor) => cursor,
-        Err(_) => return todos,
+        Err(_) => return (Status::BadRequest, Json(vec![])),
     };
 
     cursor
@@ -31,10 +31,10 @@ pub async fn get_todos(state: &State<AppState>) -> Vec<TodoResponse> {
             ));
         });
 
-    todos
+    (Status::Ok, Json(todos))
 }
 
-pub async fn create_todo(state: &State<AppState>, todo: Json<TodoRequest>) -> String {
+pub async fn create_todo(state: &State<AppState>, todo: Json<TodoRequest>) -> (Status, Json<String>) {
     let mut todo_id: String = String::from("0");
     let collection: Collection<Todo> = get_collection(state, "todo").await;
     let todo: Todo = Todo::try_from(todo.into_inner()).unwrap();
@@ -43,15 +43,15 @@ pub async fn create_todo(state: &State<AppState>, todo: Json<TodoRequest>) -> St
     if let Some(inserted_id) = result.unwrap().inserted_id.as_object_id() {
         todo_id = inserted_id.to_hex();
     }
-    todo_id
+    (Status::Ok, Json(todo_id))
 }
 
-pub async fn update_todo(state: &State<AppState>, id: String, todo: Json<TodoRequest>) -> bool {
+pub async fn update_todo(state: &State<AppState>, id: String, todo: Json<TodoRequest>) -> (Status, Json<bool>) {
     let collection: Collection<Todo> = get_collection(state, "todo").await;
     let todo: TodoRequest = TodoRequest::try_from(todo.into_inner()).unwrap();
 
     if !ObjectId::parse_str(&id).is_ok() {
-        return false;
+        return (Status::NotModified, Json(false));
     }
 
     let todo_id = ObjectId::parse_str(id).ok().unwrap_or_default();
@@ -59,7 +59,7 @@ pub async fn update_todo(state: &State<AppState>, id: String, todo: Json<TodoReq
     let existing_todo_result = collection.find_one(doc! {"_id": todo_id}).await;
 
     if existing_todo_result.ok().unwrap().is_none() {
-        return false;
+        return (Status::NotFound, Json(false));
     }
 
     collection
@@ -71,14 +71,14 @@ pub async fn update_todo(state: &State<AppState>, id: String, todo: Json<TodoReq
         .ok()
         .unwrap();
 
-    true
+    (Status::Ok, Json(true))
 }
 
-pub async fn delete_todo_perm(state: &State<AppState>, id: String) -> bool {
+pub async fn delete_todo_perm(state: &State<AppState>, id: String) -> (Status, Json<bool>) {
     let collection: Collection<Todo> = get_collection(state, "todo").await;
 
     if !ObjectId::parse_str(&id).is_ok() {
-        return false;
+        return (Status::NotModified, Json(false));
     }
 
     let todo_id = ObjectId::parse_str(id).ok().unwrap_or_default();
@@ -86,7 +86,7 @@ pub async fn delete_todo_perm(state: &State<AppState>, id: String) -> bool {
     let existing_todo_result = collection.find_one(doc! {"_id": todo_id}).await;
 
     if existing_todo_result.ok().unwrap().is_none() {
-        return false;
+        return (Status::NotFound, Json(false));
     }
 
     collection
@@ -95,7 +95,7 @@ pub async fn delete_todo_perm(state: &State<AppState>, id: String) -> bool {
         .ok()
         .unwrap();
 
-    true
+    (Status::Ok, Json(true))
 }
 
 async fn get_collection(state: &State<AppState>, collection: &str) -> Collection<Todo> {

@@ -5,6 +5,7 @@ mod utils;
 
 use std::sync::Arc;
 
+use dotenv::dotenv;
 use mongodb::Client;
 use rocket::tokio::sync::Mutex;
 use rocket::{launch, routes};
@@ -15,6 +16,8 @@ pub struct AppState {
 
 #[launch]
 async fn rocket() -> _ {
+    dotenv().ok();
+
     let mongo_client = Client::with_options(
         mongodb::options::ClientOptions::parse("mongodb://localhost:27017")
             .await
