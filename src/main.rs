@@ -1,10 +1,11 @@
 mod models;
-mod router;
+mod routes;
 mod services;
 mod utils;
 
 use std::sync::Arc;
 
+use dotenv::dotenv;
 use mongodb::Client;
 use rocket::tokio::sync::Mutex;
 use rocket::{launch, routes};
@@ -15,6 +16,8 @@ pub struct AppState {
 
 #[launch]
 async fn rocket() -> _ {
+    dotenv().ok();
+
     let mongo_client = Client::with_options(
         mongodb::options::ClientOptions::parse("mongodb://localhost:27017")
             .await
@@ -27,12 +30,14 @@ async fn rocket() -> _ {
             mongo_client: Arc::new(Mutex::new(mongo_client)),
         })
         .mount(
-            "/",
+            "/api/v1/",
             routes![
-                router::routes::index,
-                router::routes::create,
-                router::routes::update,
-                router::routes::delete
+                routes::todo::index,
+                routes::todo::create,
+                routes::todo::update,
+                routes::todo::delete,
+                routes::user::login,
+                routes::user::register
             ],
         )
 }
